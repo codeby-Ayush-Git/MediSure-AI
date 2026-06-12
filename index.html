@@ -91,6 +91,8 @@
     <span class="chip" onclick="useChip(this)" data-en="Chest pain + breathlessness" data-hi="सीने में दर्द और सांस लेने में परेशानी">Chest pain + breathlessness</span>
     <span class="chip" onclick="useChip(this)" data-en="Cough + cold 1 week" data-hi="खांसी और जुकाम 1 हफ्ते से">Cough + cold 1 week</span>
     <span class="chip" onclick="useChip(this)" data-en="Stomach ache + vomiting" data-hi="पेट दर्द और उल्टी">Stomach ache + vomiting</span>
+    <span class="chip" onclick="useChip(this)" data-en="Joint pain + body ache" data-hi="जोड़ों में दर्द और बदन दर्द">Joint pain + body ache</span>
+    <span class="chip" onclick="useChip(this)" data-en="Skin rash + itching" data-hi="त्वचा पर चकत्ते और खुजली">Skin rash + itching</span>
   </div>
 
   <div class="chat-box" id="chat">
@@ -123,12 +125,10 @@ function setLang(lang){
   document.getElementById('lang-en').classList.toggle('active', lang==='en');
   document.getElementById('lang-hi').classList.toggle('active', lang==='hi');
 
-  // Update chips text
   document.querySelectorAll('.chip').forEach(c => {
     c.textContent = c.getAttribute('data-' + lang);
   });
 
-  // Update welcome message
   const welcome = document.getElementById('welcome-msg');
   if(lang === 'hi'){
     welcome.innerHTML = `<strong style="color:#00BFA6;">नमस्ते!</strong> मैं MediSure AI हूं, आपकी हेल्थकेयर गाइडेंस असिस्टेंट।<br><br>
@@ -163,18 +163,19 @@ function showTyping(){
 }
 function removeTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
 
-// ---- Knowledge-based Triage Engine (bilingual keyword matching) ----
+// ===== EXPANDED KNOWLEDGE BASE - 18+ Common Conditions (Bilingual EN/HI) =====
 const KB = [
-  { keys: ['chest pain','breathless','breathing difficulty','saans','seene mein dard','सीने में दर्द','सांस'],
+  // ===== HIGH RISK / EMERGENCY =====
+  { keys: ['chest pain','breathless','breathing difficulty','saans phool','seene mein dard','सीने में दर्द','सांस फूल','सांस लेने में'],
     risk: 'HIGH',
     en: { summary: 'Chest pain combined with breathlessness can indicate a serious cardiac or respiratory issue that needs immediate medical attention.',
-          action: 'Go to the nearest emergency room or call an ambulance immediately. Do not wait or self-medicate.',
+          action: 'Go to the nearest emergency room or call an ambulance (108) immediately. Do not wait or self-medicate.',
           tips: ['Avoid physical exertion until checked', 'Keep the person calm and seated upright', 'Note the time symptoms started for the doctor'] },
     hi: { summary: 'सीने में दर्द के साथ सांस लेने में परेशानी एक गंभीर हृदय या श्वास संबंधी समस्या का संकेत हो सकता है, जिसके लिए तुरंत मेडिकल मदद चाहिए।',
           action: 'तुरंत नज़दीकी इमरजेंसी रूम जाएं या एम्बुलेंस (108) बुलाएं। इंतज़ार या खुद से दवा न लें।',
           tips: ['जब तक जांच न हो, ज़्यादा हलचल न करें', 'व्यक्ति को शांत और सीधा बैठा रहने दें', 'डॉक्टर के लिए लक्षण शुरू होने का समय नोट करें'] } },
 
-  { keys: ['unconscious','severe bleeding','seizure','stroke','paralysis',"can't breathe",'बेहोश','दौरा','लकवा'],
+  { keys: ['unconscious','severe bleeding','seizure','convulsion','stroke','paralysis',"can't breathe",'behosh','daura','laqwa','बेहोश','दौरा','लकवा','खून बह'],
     risk: 'HIGH',
     en: { summary: 'These symptoms are signs of a medical emergency requiring immediate professional care.',
           action: 'Call emergency services (108/112) right away.',
@@ -183,6 +184,25 @@ const KB = [
           action: 'तुरंत इमरजेंसी सेवा (108/112) को कॉल करें।',
           tips: ['व्यक्ति को अनावश्यक रूप से न हिलाएं', 'सांस लेने का रास्ता साफ रखें', 'मदद आने तक व्यक्ति के पास रहें'] } },
 
+  { keys: ['suicidal','self harm','want to die','khudkushi','आत्महत्या','खुद को नुकसान'],
+    risk: 'HIGH',
+    en: { summary: 'These feelings are serious and you deserve immediate support. You are not alone, and help is available.',
+          action: 'Please reach out to a mental health helpline or trusted person right now. In India, call iCall: 9152987821 or AASRA: 9820466726.',
+          tips: ['You matter and this feeling can pass with support', 'Talk to someone you trust immediately', 'Avoid being alone right now'] },
+    hi: { summary: 'ये भावनाएं गंभीर हैं और आपको तुरंत सहायता की ज़रूरत है। आप अकेले नहीं हैं, मदद उपलब्ध है।',
+          action: 'कृपया अभी किसी मेंटल हेल्थ हेल्पलाइन या भरोसेमंद व्यक्ति से बात करें। iCall: 9152987821 या AASRA: 9820466726 पर कॉल करें।',
+          tips: ['आप महत्वपूर्ण हैं और यह भावना सहायता से ठीक हो सकती है', 'अभी किसी भरोसेमंद व्यक्ति से बात करें', 'अभी अकेले न रहें'] } },
+
+  { keys: ['high fever 104','fever 104','fever above 103','तेज बुखार 104'],
+    risk: 'HIGH',
+    en: { summary: 'A very high fever (above 103-104°F) especially in children or elderly can be dangerous and needs urgent evaluation.',
+          action: 'Visit emergency or urgent care immediately, especially if accompanied by confusion, stiff neck, or rash.',
+          tips: ['Use tepid sponging to reduce temperature', 'Keep the person hydrated', 'Do not delay seeking care'] },
+    hi: { summary: 'बहुत तेज़ बुखार (103-104°F से ज़्यादा), खासकर बच्चों या बुज़ुर्गों में, खतरनाक हो सकता है और तुरंत जांच ज़रूरी है।',
+          action: 'तुरंत इमरजेंसी या अर्जेंट केयर जाएं, खासकर अगर भ्रम, गर्दन में जकड़न या रैश हो।',
+          tips: ['तापमान कम करने के लिए हल्के गुनगुने पानी से स्पॉन्जिंग करें', 'व्यक्ति को हाइड्रेटेड रखें', 'मदद लेने में देर न करें'] } },
+
+  // ===== MEDIUM RISK =====
   { keys: ['fever','bukhar','बुखार'],
     risk: 'MEDIUM',
     en: { summary: 'Fever lasting multiple days, especially with additional symptoms like cough, can indicate an infection that may need medical evaluation.',
@@ -191,15 +211,6 @@ const KB = [
     hi: { summary: 'कई दिनों से बुखार होना, खासकर खांसी जैसे अन्य लक्षणों के साथ, किसी इंफेक्शन का संकेत हो सकता है जिसकी जांच ज़रूरी है।',
           action: '24-48 घंटों में क्लिनिक या डॉक्टर से मिलें, खासकर अगर बुखार 102°F से ज़्यादा हो या 3 दिन से ज़्यादा रहे।',
           tips: ['ज़्यादा पानी पिएं और आराम करें', 'हर कुछ घंटों में तापमान चेक करें', 'तेज़ बुखार होने पर पैरासिटामोल लें (डॉक्टर की सलाह अनुसार)'] } },
-
-  { keys: ['cough','cold','khansi','sore throat','गला','खांसी','जुकाम'],
-    risk: 'LOW',
-    en: { summary: 'A cough or cold lasting around a week is usually a common viral infection that resolves with rest and home care.',
-          action: 'Home care is sufficient. Monitor for worsening symptoms like high fever or breathing difficulty.',
-          tips: ['Drink warm fluids and stay hydrated', 'Use steam inhalation for congestion', 'See a doctor if it persists beyond 10 days'] },
-    hi: { summary: 'एक हफ्ते तक खांसी या जुकाम होना आमतौर पर एक सामान्य वायरल इंफेक्शन है जो आराम और घरेलू देखभाल से ठीक हो जाता है।',
-          action: 'घर पर देखभाल काफी है। अगर तेज़ बुखार या सांस लेने में परेशानी हो तो ध्यान दें।',
-          tips: ['गर्म तरल पदार्थ पिएं और हाइड्रेटेड रहें', 'भाप लें जिससे जकड़न में आराम मिले', '10 दिन से ज़्यादा रहने पर डॉक्टर को दिखाएं'] } },
 
   { keys: ['stomach','vomit','vomiting','diarrhea','loose motion','pet dard','ulti','पेट दर्द','उल्टी','दस्त'],
     risk: 'MEDIUM',
@@ -210,6 +221,70 @@ const KB = [
           action: 'अगर उल्टी 24 घंटे से ज़्यादा हो या खून दिखे, तो क्लिनिक जाएं। नहीं तो हाइड्रेशन और हल्के खाने पर ध्यान दें।',
           tips: ['ORS या तरल पदार्थ बार-बार लें', 'कुछ घंटों के लिए तेज़/मसालेदार खाना न खाएं', 'चक्कर आना, मुंह सूखना जैसे डिहाइड्रेशन के संकेतों पर ध्यान दें'] } },
 
+  { keys: ['rash','skin','allergy','itching','khujli','चकत्ते','खुजली','एलर्जी'],
+    risk: 'MEDIUM',
+    en: { summary: 'Skin rashes with itching may indicate an allergic reaction, infection, or skin condition that benefits from medical evaluation.',
+          action: 'If the rash spreads quickly, causes swelling of face/throat, or is accompanied by fever, see a doctor within 24 hours.',
+          tips: ['Avoid scratching the affected area', 'Avoid new soaps, foods, or products until evaluated', 'Apply a cold compress for relief'] },
+    hi: { summary: 'त्वचा पर चकत्ते और खुजली एलर्जी, इंफेक्शन या किसी त्वचा संबंधी समस्या का संकेत हो सकते हैं जिनकी जांच ज़रूरी है।',
+          action: 'अगर चकत्ते तेज़ी से फैलें, चेहरे/गले में सूजन हो, या बुखार के साथ हो, तो 24 घंटों में डॉक्टर को दिखाएं।',
+          tips: ['प्रभावित जगह को खुजलाएं नहीं', 'जांच होने तक नए साबुन, खाने या प्रोडक्ट्स से बचें', 'आराम के लिए ठंडी पट्टी लगाएं'] } },
+
+  { keys: ['urinary','urine pain','burning urination','peshab','पेशाब में जलन','मूत्र'],
+    risk: 'MEDIUM',
+    en: { summary: 'Pain or burning during urination often indicates a urinary tract infection (UTI), which usually needs antibiotics.',
+          action: 'Visit a clinic within 24-48 hours for evaluation and possible antibiotic treatment.',
+          tips: ['Drink plenty of water', 'Avoid holding urine for long periods', 'Maintain proper hygiene'] },
+    hi: { summary: 'पेशाब में दर्द या जलन अक्सर यूरिनरी ट्रैक्ट इंफेक्शन (UTI) का संकेत होता है, जिसके लिए सामान्यतः एंटीबायोटिक्स की ज़रूरत होती है।',
+          action: '24-48 घंटों में क्लिनिक जाकर जांच कराएं और संभावित एंटीबायोटिक उपचार लें।',
+          tips: ['खूब पानी पिएं', 'पेशाब को ज़्यादा समय तक न रोकें', 'सफाई का ध्यान रखें'] } },
+
+  { keys: ['joint pain','body ache','muscle pain','jodo me dard','जोड़ों में दर्द','बदन दर्द','मांसपेशियों'],
+    risk: 'MEDIUM',
+    en: { summary: 'Body aches and joint pain along with fever could indicate a viral infection (like dengue/chikungunya) common in many regions.',
+          action: 'If pain is severe, accompanied by high fever, or rash appears, get a blood test done within 24-48 hours.',
+          tips: ['Rest and stay hydrated', 'Avoid aspirin if dengue is suspected (consult doctor)', 'Monitor for warning signs like bleeding gums'] },
+    hi: { summary: 'बुखार के साथ बदन दर्द और जोड़ों में दर्द डेंगू/चिकनगुनिया जैसे वायरल इंफेक्शन का संकेत हो सकता है, जो कई क्षेत्रों में सामान्य है।',
+          action: 'अगर दर्द तेज़ हो, तेज़ बुखार के साथ हो, या रैश दिखे, तो 24-48 घंटों में ब्लड टेस्ट कराएं।',
+          tips: ['आराम करें और हाइड्रेटेड रहें', 'अगर डेंगू का संदेह हो तो एस्पिरिन से बचें (डॉक्टर से सलाह लें)', 'मसूड़ों से खून आना जैसे चेतावनी संकेतों पर ध्यान दें'] } },
+
+  { keys: ['eye pain','eye infection','red eyes','aankh','आँख','आंखों में दर्द','लाल आंख'],
+    risk: 'MEDIUM',
+    en: { summary: 'Eye pain, redness, or discharge can indicate conjunctivitis (eye infection) or other eye conditions needing evaluation.',
+          action: 'See a doctor within 24-48 hours, especially if vision is affected or pain is severe.',
+          tips: ['Avoid touching/rubbing the eyes', 'Use a clean cloth to wipe discharge', 'Avoid sharing towels to prevent spread'] },
+    hi: { summary: 'आंखों में दर्द, लालिमा या पानी आना कंजंक्टिवाइटिस (आंख का इंफेक्शन) या अन्य समस्या का संकेत हो सकता है जिसकी जांच ज़रूरी है।',
+          action: '24-48 घंटों में डॉक्टर को दिखाएं, खासकर अगर देखने में परेशानी हो या दर्द तेज़ हो।',
+          tips: ['आंखों को छूने/मलने से बचें', 'साफ कपड़े से डिस्चार्ज पोंछें', 'फैलाव रोकने के लिए तौलिया शेयर न करें'] } },
+
+  { keys: ['toothache','tooth pain','dant dard','दांत दर्द','दांत में दर्द'],
+    risk: 'MEDIUM',
+    en: { summary: 'Persistent toothache can indicate cavity, infection, or gum disease that needs dental attention.',
+          action: 'Visit a dentist within 1-2 days, especially if there is swelling, fever, or the pain is severe.',
+          tips: ['Rinse with warm salt water', 'Avoid very hot, cold, or sugary foods', 'Take pain relief medication if needed (as advised)'] },
+    hi: { summary: 'लगातार दांत दर्द कैविटी, इंफेक्शन या मसूड़ों की बीमारी का संकेत हो सकता है जिसके लिए डेंटल जांच ज़रूरी है।',
+          action: '1-2 दिनों में डेंटिस्ट के पास जाएं, खासकर अगर सूजन, बुखार हो या दर्द तेज़ हो।',
+          tips: ['गुनगुने नमक के पानी से कुल्ला करें', 'बहुत गरम, ठंडा या मीठा खाने से बचें', 'ज़रूरत पड़े तो दर्द निवारक दवा लें (सलाह अनुसार)'] } },
+
+  { keys: ['back pain','kamar dard','कमर दर्द','पीठ दर्द'],
+    risk: 'MEDIUM',
+    en: { summary: 'Back pain can result from muscle strain, posture issues, or in some cases kidney problems.',
+          action: 'If pain persists beyond a week, radiates to legs, or comes with fever/urinary issues, consult a doctor.',
+          tips: ['Apply warm compress to the area', 'Avoid heavy lifting', 'Maintain good posture while sitting/sleeping'] },
+    hi: { summary: 'कमर दर्द मसल स्ट्रेन, पोस्चर की समस्या, या कुछ मामलों में किडनी की समस्या से हो सकता है।',
+          action: 'अगर दर्द एक हफ्ते से ज़्यादा रहे, पैरों तक फैले, या बुखार/पेशाब की समस्या के साथ हो, तो डॉक्टर से सलाह लें।',
+          tips: ['प्रभावित जगह पर गरम पट्टी लगाएं', 'भारी वज़न उठाने से बचें', 'बैठने/सोने का सही तरीका अपनाएं'] } },
+
+  // ===== LOW RISK =====
+  { keys: ['cough','cold','khansi','sore throat','gala','खांसी','जुकाम','गला खराब'],
+    risk: 'LOW',
+    en: { summary: 'A cough or cold lasting around a week is usually a common viral infection that resolves with rest and home care.',
+          action: 'Home care is sufficient. Monitor for worsening symptoms like high fever or breathing difficulty.',
+          tips: ['Drink warm fluids and stay hydrated', 'Use steam inhalation for congestion', 'See a doctor if it persists beyond 10 days'] },
+    hi: { summary: 'एक हफ्ते तक खांसी या जुकाम होना आमतौर पर एक सामान्य वायरल इंफेक्शन है जो आराम और घरेलू देखभाल से ठीक हो जाता है।',
+          action: 'घर पर देखभाल काफी है। अगर तेज़ बुखार या सांस लेने में परेशानी हो तो ध्यान दें।',
+          tips: ['गर्म तरल पदार्थ पिएं और हाइड्रेटेड रहें', 'भाप लें जिससे जकड़न में आराम मिले', '10 दिन से ज़्यादा रहने पर डॉक्टर को दिखाएं'] } },
+
   { keys: ['headache','sir dard','migraine','सिरदर्द'],
     risk: 'LOW',
     en: { summary: 'A headache along with mild fever is often related to a common viral infection, tension, or dehydration.',
@@ -218,16 +293,78 @@ const KB = [
     hi: { summary: 'हल्के बुखार के साथ सिरदर्द अक्सर सामान्य वायरल इंफेक्शन, तनाव या डिहाइड्रेशन से जुड़ा होता है।',
           action: 'आराम और हाइड्रेशन से घर पर देखभाल काफी है। अगर तेज़ या अचानक हो तो डॉक्टर से मिलें।',
           tips: ['शांत, अंधेरे कमरे में आराम करें', 'हाइड्रेटेड रहें', 'थोड़ी देर स्क्रीन से दूर रहें'] } },
+
+  { keys: ['constipation','gas','bloating','acidity','कब्ज','गैस','एसिडिटी'],
+    risk: 'LOW',
+    en: { summary: 'Constipation, gas, or acidity are common digestive issues usually related to diet and lifestyle.',
+          action: 'Home remedies and dietary changes usually help. See a doctor if it persists beyond a week or causes severe pain.',
+          tips: ['Increase fiber and water intake', 'Avoid oily/spicy food', 'Light physical activity can help digestion'] },
+    hi: { summary: 'कब्ज, गैस या एसिडिटी सामान्य पाचन समस्याएं हैं जो अक्सर खान-पान और लाइफस्टाइल से जुड़ी होती हैं।',
+          action: 'घरेलू उपाय और खान-पान में बदलाव से आमतौर पर ठीक हो जाता है। एक हफ्ते से ज़्यादा रहे या तेज़ दर्द हो तो डॉक्टर को दिखाएं।',
+          tips: ['फाइबर और पानी का सेवन बढ़ाएं', 'तेल/मसालेदार खाने से बचें', 'हल्की शारीरिक गतिविधि पाचन में मदद करती है'] } },
+
+  { keys: ['mild fever','low grade fever','halka bukhar','हल्का बुखार'],
+    risk: 'LOW',
+    en: { summary: 'A mild, low-grade fever (under 100.4°F) without other severe symptoms is often the body fighting a minor infection.',
+          action: 'Rest and monitor at home. Visit a doctor if fever rises or other symptoms develop.',
+          tips: ['Rest and stay hydrated', 'Wear light clothing', 'Monitor temperature twice a day'] },
+    hi: { summary: 'हल्का बुखार (100.4°F से कम) बिना अन्य गंभीर लक्षणों के, अक्सर शरीर के छोटे इंफेक्शन से लड़ने का संकेत होता है।',
+          action: 'घर पर आराम करें और निगरानी रखें। बुखार बढ़े या अन्य लक्षण आएं तो डॉक्टर को दिखाएं।',
+          tips: ['आराम करें और हाइड्रेटेड रहें', 'हल्के कपड़े पहनें', 'दिन में दो बार तापमान चेक करें'] } },
+
+  { keys: ['fatigue','tiredness','weakness','kamzori','थकान','कमज़ोरी'],
+    risk: 'LOW',
+    en: { summary: 'General fatigue or weakness without other major symptoms is often related to sleep, nutrition, or stress.',
+          action: 'Improve sleep, diet, and hydration. If fatigue persists beyond 2 weeks despite rest, consult a doctor (could indicate anemia/thyroid issues).',
+          tips: ['Ensure 7-8 hours of sleep', 'Eat iron-rich foods (leafy greens, etc.)', 'Reduce stress where possible'] },
+    hi: { summary: 'बिना अन्य गंभीर लक्षणों के सामान्य थकान या कमज़ोरी अक्सर नींद, पोषण या तनाव से जुड़ी होती है।',
+          action: 'नींद, खान-पान और हाइड्रेशन सुधारें। आराम के बावजूद 2 हफ्ते से ज़्यादा थकान रहे तो डॉक्टर से सलाह लें (एनीमिया/थायरॉइड हो सकता है)।',
+          tips: ['7-8 घंटे की नींद लें', 'आयरन युक्त खाना खाएं (हरी सब्जियां आदि)', 'जहां संभव हो तनाव कम करें'] } },
+
+  { keys: ['ear pain','ear ache','kaan dard','कान दर्द','कान में दर्द'],
+    risk: 'LOW',
+    en: { summary: 'Ear pain, especially in mild form, is often due to wax buildup, mild infection, or pressure changes.',
+          action: 'Home care helps for mild pain. If severe, with discharge, or hearing loss, see a doctor within 24-48 hours.',
+          tips: ['Avoid inserting objects into the ear', 'Apply a warm compress for relief', 'Keep ears dry'] },
+    hi: { summary: 'कान दर्द, खासकर हल्का, अक्सर वैक्स जमने, छोटे इंफेक्शन या प्रेशर बदलाव से होता है।',
+          action: 'हल्के दर्द में घरेलू देखभाल काफी है। अगर तेज़ हो, डिस्चार्ज हो, या सुनने में परेशानी हो, तो 24-48 घंटों में डॉक्टर को दिखाएं।',
+          tips: ['कान में कोई चीज़ न डालें', 'आराम के लिए गरम पट्टी लगाएं', 'कान को सूखा रखें'] } },
+
+  { keys: ['minor cut','small wound','scrape','chot','चोट','खरोंच'],
+    risk: 'LOW',
+    en: { summary: 'Minor cuts, scrapes, or small wounds can usually be managed at home with basic first aid.',
+          action: "Clean the wound, apply antiseptic, and cover with a bandage. See a doctor if it doesn't stop bleeding, is deep, or shows signs of infection (redness, pus).",
+          tips: ['Wash hands before treating the wound', 'Keep the wound clean and dry', 'Watch for signs of infection over the next few days'] },
+    hi: { summary: 'छोटी चोट, खरोंच या घाव को आमतौर पर घर पर बेसिक फर्स्ट एड से ठीक किया जा सकता है।',
+          action: 'घाव को साफ करें, एंटीसेप्टिक लगाएं और बैंडेज से ढकें। अगर खून न रुके, घाव गहरा हो, या इंफेक्शन (लालिमा, मवाद) के संकेत हों, तो डॉक्टर को दिखाएं।',
+          tips: ['घाव साफ करने से पहले हाथ धोएं', 'घाव को साफ और सूखा रखें', 'अगले कुछ दिनों में इंफेक्शन के संकेतों पर ध्यान दें'] } },
+
+  { keys: ['insomnia','cant sleep','sleep problem','neend nahi','नींद नहीं आ','अनिद्रा'],
+    risk: 'LOW',
+    en: { summary: 'Difficulty sleeping is often related to stress, screen time, or irregular routines.',
+          action: 'Try improving sleep hygiene. If it persists for weeks and affects daily life, consult a doctor.',
+          tips: ['Avoid screens 1 hour before bed', 'Maintain a consistent sleep schedule', 'Avoid caffeine in the evening'] },
+    hi: { summary: 'सोने में परेशानी अक्सर तनाव, स्क्रीन टाइम या अनियमित रूटीन से जुड़ी होती है।',
+          action: 'स्लीप हाइजीन सुधारने की कोशिश करें। हफ्तों तक रहे और रोज़मर्रा की ज़िंदगी पर असर पड़े तो डॉक्टर से सलाह लें।',
+          tips: ['सोने से 1 घंटे पहले स्क्रीन से दूर रहें', 'सोने का नियमित समय रखें', 'शाम को कैफीन से बचें'] } },
+
+  { keys: ['anxiety','stress','tension','depression','chinta','तनाव','चिंता','डिप्रेशन'],
+    risk: 'LOW',
+    en: { summary: 'Mild stress or anxiety is common and manageable with self-care, but persistent feelings deserve attention.',
+          action: 'Practice relaxation techniques. If feelings persist for over 2 weeks or interfere with daily life, consider talking to a counselor or doctor.',
+          tips: ['Practice deep breathing or meditation', 'Talk to someone you trust', 'Maintain regular exercise and sleep'] },
+    hi: { summary: 'हल्का तनाव या चिंता सामान्य है और सेल्फ-केयर से मैनेज हो सकती है, लेकिन लगातार रहने पर ध्यान देना ज़रूरी है।',
+          action: 'रिलैक्सेशन तकनीकें अपनाएं। अगर 2 हफ्ते से ज़्यादा रहे या रोज़मर्रा की ज़िंदगी पर असर डाले, तो काउंसलर या डॉक्टर से बात करें।',
+          tips: ['गहरी सांस लेने या मेडिटेशन का अभ्यास करें', 'किसी भरोसेमंद व्यक्ति से बात करें', 'नियमित व्यायाम और नींद बनाए रखें'] } },
 ];
 
 function classify(text){
   const t = text.toLowerCase();
   for(const entry of KB){
-    if(entry.keys.some(k => t.toLowerCase().includes(k.toLowerCase()) || text.includes(k))) {
+    if(entry.keys.some(k => t.includes(k.toLowerCase()) || text.includes(k))) {
       return { risk: entry.risk, ...entry[currentLang] };
     }
   }
-  // default fallback
   if(currentLang === 'hi'){
     return {
       risk: 'MEDIUM',
