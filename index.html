@@ -13,7 +13,19 @@
   .brand p { font-size: 12px; color: #8899AA; margin-top: 1px; }
   .badge { margin-left: auto; background: #0D2137; border: 1px solid #00BFA630; color: #00BFA6; font-size: 11px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
   main { width: 100%; max-width: 720px; padding: 1.2rem 1rem; flex: 1; display: flex; flex-direction: column; }
-  .chat-box { background: #0D2137; border: 1px solid #1a3a55; border-radius: 16px; flex: 1; min-height: 380px; max-height: 420px; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 14px; margin-bottom: 1rem; }
+
+  .how-it-works { background: #0D2137; border: 1px solid #1a3a55; border-radius: 14px; padding: 14px 16px; margin-bottom: 1rem; }
+  .how-it-works h3 { font-size: 13px; color: #00BFA6; margin-bottom: 10px; font-weight: 600; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; }
+  .step { flex: 1; min-width: 110px; background: #0A1628; border: 1px solid #1a3a55; border-radius: 10px; padding: 8px 10px; text-align: center; }
+  .step .num { color: #00BFA6; font-size: 16px; font-weight: 700; }
+  .step .label { font-size: 11px; color: #8899AA; margin-top: 3px; }
+
+  .lang-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+  .lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid #1a3a55; background: #0D2137; color: #8899AA; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .lang-btn.active { background: #00BFA620; border-color: #00BFA6; color: #00BFA6; }
+
+  .chat-box { background: #0D2137; border: 1px solid #1a3a55; border-radius: 16px; flex: 1; min-height: 360px; max-height: 420px; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 14px; margin-bottom: 1rem; }
   .msg { display: flex; gap: 10px; align-items: flex-start; }
   .msg.user { flex-direction: row-reverse; }
   .av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
@@ -44,7 +56,7 @@
   .dot:nth-child(2){animation-delay:.2s} .dot:nth-child(3){animation-delay:.4s}
   @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
   footer { font-size: 11px; color: #445566; text-align: center; padding: 0.8rem 1rem 1.2rem; }
-  @media(max-width:500px){ .brand h1{font-size:17px} .badge{display:none} }
+  @media(max-width:500px){ .brand h1{font-size:17px} .badge{display:none} .step{min-width:80px} }
 </style>
 </head>
 <body>
@@ -59,17 +71,32 @@
 </header>
 
 <main>
+  <div class="how-it-works">
+    <h3>⚙️ HOW IT WORKS</h3>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div class="label">Describe Symptoms</div></div>
+      <div class="step"><div class="num">2</div><div class="label">AI Analyzes Risk</div></div>
+      <div class="step"><div class="num">3</div><div class="label">Get Risk Level</div></div>
+      <div class="step"><div class="num">4</div><div class="label">Follow Next Steps</div></div>
+    </div>
+  </div>
+
+  <div class="lang-toggle">
+    <span class="lang-btn active" id="lang-en" onclick="setLang('en')">English</span>
+    <span class="lang-btn" id="lang-hi" onclick="setLang('hi')">हिन्दी</span>
+  </div>
+
   <div class="chips" id="chips">
-    <span class="chip" onclick="useChip(this)">Fever + headache 2 days</span>
-    <span class="chip" onclick="useChip(this)">Chest pain + breathlessness</span>
-    <span class="chip" onclick="useChip(this)">Cough + cold 1 week</span>
-    <span class="chip" onclick="useChip(this)">Stomach ache + vomiting</span>
+    <span class="chip" onclick="useChip(this)" data-en="Fever + headache 2 days" data-hi="बुखार और सिरदर्द 2 दिन से">Fever + headache 2 days</span>
+    <span class="chip" onclick="useChip(this)" data-en="Chest pain + breathlessness" data-hi="सीने में दर्द और सांस लेने में परेशानी">Chest pain + breathlessness</span>
+    <span class="chip" onclick="useChip(this)" data-en="Cough + cold 1 week" data-hi="खांसी और जुकाम 1 हफ्ते से">Cough + cold 1 week</span>
+    <span class="chip" onclick="useChip(this)" data-en="Stomach ache + vomiting" data-hi="पेट दर्द और उल्टी">Stomach ache + vomiting</span>
   </div>
 
   <div class="chat-box" id="chat">
     <div class="msg">
       <div class="av bot">🩺</div>
-      <div class="bubble bot">
+      <div class="bubble bot" id="welcome-msg">
         <strong style="color:#00BFA6;">Namaste!</strong> I'm MediSure AI, your healthcare guidance assistant.<br><br>
         Describe your symptoms and I'll assess the risk level and suggest next steps.<br>
         <span style="color:#445566; font-size:12px;">⚠️ This is guidance only — not a medical diagnosis.</span>
@@ -83,12 +110,38 @@
   </div>
 </main>
 
-<footer>🔒 Privacy-first · No diagnosis · Guidance only · GenAI-powered risk triage &nbsp;|&nbsp; Team Codex_alpha · Ayush Kumar</footer>
+<footer>🔒 Privacy-first · No diagnosis · Guidance only · Multilingual GenAI risk triage &nbsp;|&nbsp; Team Codex_alpha · Ayush Kumar</footer>
 
 <script>
 const chat = document.getElementById('chat');
 const inp = document.getElementById('inp');
 const btn = document.getElementById('sendbtn');
+let currentLang = 'en';
+
+function setLang(lang){
+  currentLang = lang;
+  document.getElementById('lang-en').classList.toggle('active', lang==='en');
+  document.getElementById('lang-hi').classList.toggle('active', lang==='hi');
+
+  // Update chips text
+  document.querySelectorAll('.chip').forEach(c => {
+    c.textContent = c.getAttribute('data-' + lang);
+  });
+
+  // Update welcome message
+  const welcome = document.getElementById('welcome-msg');
+  if(lang === 'hi'){
+    welcome.innerHTML = `<strong style="color:#00BFA6;">नमस्ते!</strong> मैं MediSure AI हूं, आपकी हेल्थकेयर गाइडेंस असिस्टेंट।<br><br>
+      अपने लक्षण बताइए और मैं रिस्क लेवल बताकर आगे क्या करना है, सुझाव दूंगा।<br>
+      <span style="color:#445566; font-size:12px;">⚠️ यह सिर्फ गाइडेंस है — मेडिकल डायग्नोसिस नहीं।</span>`;
+    inp.placeholder = 'अपने लक्षण बताइए... (जैसे बुखार 3 दिन से, खांसी, सीने में दर्द)';
+  } else {
+    welcome.innerHTML = `<strong style="color:#00BFA6;">Namaste!</strong> I'm MediSure AI, your healthcare guidance assistant.<br><br>
+      Describe your symptoms and I'll assess the risk level and suggest next steps.<br>
+      <span style="color:#445566; font-size:12px;">⚠️ This is guidance only — not a medical diagnosis.</span>`;
+    inp.placeholder = 'Describe your symptoms... (e.g. fever 3 days, cough, chest pain)';
+  }
+}
 
 function useChip(el){ inp.value = el.textContent; inp.focus(); }
 function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
@@ -110,52 +163,79 @@ function showTyping(){
 }
 function removeTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
 
-// ---- Knowledge-based Triage Engine (RAG-style rule matching) ----
-// Maps symptom keywords -> risk category, used as offline fallback / demo engine
+// ---- Knowledge-based Triage Engine (bilingual keyword matching) ----
 const KB = [
-  { keys: ['chest pain','breathless','breathing difficulty','saans','seene mein dard'],
+  { keys: ['chest pain','breathless','breathing difficulty','saans','seene mein dard','सीने में दर्द','सांस'],
     risk: 'HIGH',
-    summary: 'Chest pain combined with breathlessness can indicate a serious cardiac or respiratory issue that needs immediate medical attention.',
-    action: 'Go to the nearest emergency room or call an ambulance immediately. Do not wait or self-medicate.',
-    tips: ['Avoid physical exertion until checked', 'Keep the person calm and seated upright', 'Note the time symptoms started for the doctor'] },
+    en: { summary: 'Chest pain combined with breathlessness can indicate a serious cardiac or respiratory issue that needs immediate medical attention.',
+          action: 'Go to the nearest emergency room or call an ambulance immediately. Do not wait or self-medicate.',
+          tips: ['Avoid physical exertion until checked', 'Keep the person calm and seated upright', 'Note the time symptoms started for the doctor'] },
+    hi: { summary: 'सीने में दर्द के साथ सांस लेने में परेशानी एक गंभीर हृदय या श्वास संबंधी समस्या का संकेत हो सकता है, जिसके लिए तुरंत मेडिकल मदद चाहिए।',
+          action: 'तुरंत नज़दीकी इमरजेंसी रूम जाएं या एम्बुलेंस (108) बुलाएं। इंतज़ार या खुद से दवा न लें।',
+          tips: ['जब तक जांच न हो, ज़्यादा हलचल न करें', 'व्यक्ति को शांत और सीधा बैठा रहने दें', 'डॉक्टर के लिए लक्षण शुरू होने का समय नोट करें'] } },
 
-  { keys: ['unconscious','severe bleeding','seizure','stroke','paralysis','can\'t breathe'],
+  { keys: ['unconscious','severe bleeding','seizure','stroke','paralysis',"can't breathe",'बेहोश','दौरा','लकवा'],
     risk: 'HIGH',
-    summary: 'These symptoms are signs of a medical emergency requiring immediate professional care.',
-    action: 'Call emergency services (108/112) right away.',
-    tips: ['Do not move the person unnecessarily', 'Keep airway clear', 'Stay with the person until help arrives'] },
+    en: { summary: 'These symptoms are signs of a medical emergency requiring immediate professional care.',
+          action: 'Call emergency services (108/112) right away.',
+          tips: ['Do not move the person unnecessarily', 'Keep airway clear', 'Stay with the person until help arrives'] },
+    hi: { summary: 'ये लक्षण एक मेडिकल इमरजेंसी का संकेत हैं जिनके लिए तुरंत पेशेवर मदद चाहिए।',
+          action: 'तुरंत इमरजेंसी सेवा (108/112) को कॉल करें।',
+          tips: ['व्यक्ति को अनावश्यक रूप से न हिलाएं', 'सांस लेने का रास्ता साफ रखें', 'मदद आने तक व्यक्ति के पास रहें'] } },
 
-  { keys: ['fever','bukhar'],
+  { keys: ['fever','bukhar','बुखार'],
     risk: 'MEDIUM',
-    summary: 'Fever lasting multiple days, especially with additional symptoms like cough, can indicate an infection that may need medical evaluation.',
-    action: 'Visit a clinic or doctor within 24-48 hours, especially if fever exceeds 102°F or persists beyond 3 days.',
-    tips: ['Stay hydrated and rest', 'Monitor temperature every few hours', 'Take paracetamol if fever is high (as per dosage guidance)'] },
+    en: { summary: 'Fever lasting multiple days, especially with additional symptoms like cough, can indicate an infection that may need medical evaluation.',
+          action: 'Visit a clinic or doctor within 24-48 hours, especially if fever exceeds 102°F or persists beyond 3 days.',
+          tips: ['Stay hydrated and rest', 'Monitor temperature every few hours', 'Take paracetamol if fever is high (as per dosage guidance)'] },
+    hi: { summary: 'कई दिनों से बुखार होना, खासकर खांसी जैसे अन्य लक्षणों के साथ, किसी इंफेक्शन का संकेत हो सकता है जिसकी जांच ज़रूरी है।',
+          action: '24-48 घंटों में क्लिनिक या डॉक्टर से मिलें, खासकर अगर बुखार 102°F से ज़्यादा हो या 3 दिन से ज़्यादा रहे।',
+          tips: ['ज़्यादा पानी पिएं और आराम करें', 'हर कुछ घंटों में तापमान चेक करें', 'तेज़ बुखार होने पर पैरासिटामोल लें (डॉक्टर की सलाह अनुसार)'] } },
 
-  { keys: ['cough','cold','khansi','sore throat','gala'],
+  { keys: ['cough','cold','khansi','sore throat','गला','खांसी','जुकाम'],
     risk: 'LOW',
-    summary: 'A cough or cold lasting around a week is usually a common viral infection that resolves with rest and home care.',
-    action: 'Home care is sufficient. Monitor for worsening symptoms like high fever or breathing difficulty.',
-    tips: ['Drink warm fluids and stay hydrated', 'Use steam inhalation for congestion', 'See a doctor if it persists beyond 10 days'] },
+    en: { summary: 'A cough or cold lasting around a week is usually a common viral infection that resolves with rest and home care.',
+          action: 'Home care is sufficient. Monitor for worsening symptoms like high fever or breathing difficulty.',
+          tips: ['Drink warm fluids and stay hydrated', 'Use steam inhalation for congestion', 'See a doctor if it persists beyond 10 days'] },
+    hi: { summary: 'एक हफ्ते तक खांसी या जुकाम होना आमतौर पर एक सामान्य वायरल इंफेक्शन है जो आराम और घरेलू देखभाल से ठीक हो जाता है।',
+          action: 'घर पर देखभाल काफी है। अगर तेज़ बुखार या सांस लेने में परेशानी हो तो ध्यान दें।',
+          tips: ['गर्म तरल पदार्थ पिएं और हाइड्रेटेड रहें', 'भाप लें जिससे जकड़न में आराम मिले', '10 दिन से ज़्यादा रहने पर डॉक्टर को दिखाएं'] } },
 
-  { keys: ['stomach','vomit','vomiting','diarrhea','loose motion','pet dard','ulti'],
+  { keys: ['stomach','vomit','vomiting','diarrhea','loose motion','pet dard','ulti','पेट दर्द','उल्टी','दस्त'],
     risk: 'MEDIUM',
-    summary: 'Stomach ache with vomiting can be due to food poisoning, infection, or indigestion. Dehydration is the main risk.',
-    action: 'If vomiting continues beyond 24 hours or you see blood, visit a clinic. Otherwise, focus on hydration and light food.',
-    tips: ['Drink ORS or fluids frequently', 'Avoid solid/spicy food for a few hours', 'Watch for signs of dehydration (dizziness, dry mouth)'] },
+    en: { summary: 'Stomach ache with vomiting can be due to food poisoning, infection, or indigestion. Dehydration is the main risk.',
+          action: 'If vomiting continues beyond 24 hours or you see blood, visit a clinic. Otherwise, focus on hydration and light food.',
+          tips: ['Drink ORS or fluids frequently', 'Avoid solid/spicy food for a few hours', 'Watch for signs of dehydration (dizziness, dry mouth)'] },
+    hi: { summary: 'उल्टी के साथ पेट दर्द फूड पॉइज़निंग, इंफेक्शन या अपच के कारण हो सकता है। डिहाइड्रेशन सबसे बड़ा खतरा है।',
+          action: 'अगर उल्टी 24 घंटे से ज़्यादा हो या खून दिखे, तो क्लिनिक जाएं। नहीं तो हाइड्रेशन और हल्के खाने पर ध्यान दें।',
+          tips: ['ORS या तरल पदार्थ बार-बार लें', 'कुछ घंटों के लिए तेज़/मसालेदार खाना न खाएं', 'चक्कर आना, मुंह सूखना जैसे डिहाइड्रेशन के संकेतों पर ध्यान दें'] } },
 
-  { keys: ['headache','sir dard','migraine'],
+  { keys: ['headache','sir dard','migraine','सिरदर्द'],
     risk: 'LOW',
-    summary: 'A headache along with mild fever is often related to a common viral infection, tension, or dehydration.',
-    action: 'Home care with rest and hydration is usually enough. Seek care if it becomes severe or sudden.',
-    tips: ['Rest in a quiet, dark room', 'Stay hydrated', 'Avoid screen time for a while'] },
+    en: { summary: 'A headache along with mild fever is often related to a common viral infection, tension, or dehydration.',
+          action: 'Home care with rest and hydration is usually enough. Seek care if it becomes severe or sudden.',
+          tips: ['Rest in a quiet, dark room', 'Stay hydrated', 'Avoid screen time for a while'] },
+    hi: { summary: 'हल्के बुखार के साथ सिरदर्द अक्सर सामान्य वायरल इंफेक्शन, तनाव या डिहाइड्रेशन से जुड़ा होता है।',
+          action: 'आराम और हाइड्रेशन से घर पर देखभाल काफी है। अगर तेज़ या अचानक हो तो डॉक्टर से मिलें।',
+          tips: ['शांत, अंधेरे कमरे में आराम करें', 'हाइड्रेटेड रहें', 'थोड़ी देर स्क्रीन से दूर रहें'] } },
 ];
 
 function classify(text){
   const t = text.toLowerCase();
   for(const entry of KB){
-    if(entry.keys.some(k => t.includes(k))) return entry;
+    if(entry.keys.some(k => t.toLowerCase().includes(k.toLowerCase()) || text.includes(k))) {
+      return { risk: entry.risk, ...entry[currentLang] };
+    }
   }
   // default fallback
+  if(currentLang === 'hi'){
+    return {
+      risk: 'MEDIUM',
+      summary: 'बताए गए लक्षणों के आधार पर, किसी गंभीर समस्या को दूर करने के लिए पेशेवर सलाह लेना सबसे अच्छा है।',
+      action: 'सही जांच के लिए अगले 1-2 दिनों में नज़दीकी क्लिनिक जाएं या डॉक्टर से सलाह लें।',
+      tips: ['लक्षण कब शुरू हुए ये नोट करें', 'बिना सलाह के खुद से दवा न लें', 'किसी भी बिगड़ते लक्षण पर ध्यान दें']
+    };
+  }
   return {
     risk: 'MEDIUM',
     summary: 'Based on the symptoms described, it is best to get a professional opinion to rule out anything serious.',
@@ -164,6 +244,11 @@ function classify(text){
   };
 }
 
+const labels = {
+  en: { low: '🟢 Low Risk — Home Care', medium: '🟡 Medium Risk — Visit Clinic', high: '🔴 High Risk — Emergency', action: 'Recommended Action:' },
+  hi: { low: '🟢 कम जोखिम — घर पर देखभाल', medium: '🟡 मध्यम जोखिम — क्लिनिक जाएं', high: '🔴 उच्च जोखिम — इमरजेंसी', action: 'सुझाई गई कार्रवाई:' }
+};
+
 function sendMsg(){
   const text = inp.value.trim();
   if(!text) return;
@@ -171,16 +256,16 @@ function sendMsg(){
   addMsg(text,'user');
   showTyping();
 
-  // Simulated AI processing delay for realistic feel
   setTimeout(() => {
     removeTyping();
     const p = classify(text);
+    const L = labels[currentLang];
     const rc = p.risk==='LOW'?'low':p.risk==='MEDIUM'?'medium':'high';
-    const rl = p.risk==='LOW'?'🟢 Low Risk — Home Care':p.risk==='MEDIUM'?'🟡 Medium Risk — Visit Clinic':'🔴 High Risk — Emergency';
+    const rl = p.risk==='LOW'?L.low:p.risk==='MEDIUM'?L.medium:L.high;
     const html=`
       <div class="risk-badge ${rc}">${rl}</div>
       <div style="font-size:14px;line-height:1.65;">${p.summary}</div>
-      <div class="action-box"><strong>Recommended Action:</strong> ${p.action}</div>
+      <div class="action-box"><strong>${L.action}</strong> ${p.action}</div>
       ${p.tips?`<div class="tips">${p.tips.map(t=>`<div>· ${t}</div>`).join('')}</div>`:''}
     `;
     addMsg(html,'bot');
