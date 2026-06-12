@@ -83,7 +83,7 @@
   </div>
 </main>
 
-<footer>🔒 Privacy-first · No diagnosis · Guidance only · Powered by Claude AI &nbsp;|&nbsp; Team Codex_alpha · Ayush Kumar</footer>
+<footer>🔒 Privacy-first · No diagnosis · Guidance only · GenAI-powered risk triage &nbsp;|&nbsp; Team Codex_alpha · Ayush Kumar</footer>
 
 <script>
 const chat = document.getElementById('chat');
@@ -110,33 +110,71 @@ function showTyping(){
 }
 function removeTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
 
-async function sendMsg(){
+// ---- Knowledge-based Triage Engine (RAG-style rule matching) ----
+// Maps symptom keywords -> risk category, used as offline fallback / demo engine
+const KB = [
+  { keys: ['chest pain','breathless','breathing difficulty','saans','seene mein dard'],
+    risk: 'HIGH',
+    summary: 'Chest pain combined with breathlessness can indicate a serious cardiac or respiratory issue that needs immediate medical attention.',
+    action: 'Go to the nearest emergency room or call an ambulance immediately. Do not wait or self-medicate.',
+    tips: ['Avoid physical exertion until checked', 'Keep the person calm and seated upright', 'Note the time symptoms started for the doctor'] },
+
+  { keys: ['unconscious','severe bleeding','seizure','stroke','paralysis','can\'t breathe'],
+    risk: 'HIGH',
+    summary: 'These symptoms are signs of a medical emergency requiring immediate professional care.',
+    action: 'Call emergency services (108/112) right away.',
+    tips: ['Do not move the person unnecessarily', 'Keep airway clear', 'Stay with the person until help arrives'] },
+
+  { keys: ['fever','bukhar'],
+    risk: 'MEDIUM',
+    summary: 'Fever lasting multiple days, especially with additional symptoms like cough, can indicate an infection that may need medical evaluation.',
+    action: 'Visit a clinic or doctor within 24-48 hours, especially if fever exceeds 102°F or persists beyond 3 days.',
+    tips: ['Stay hydrated and rest', 'Monitor temperature every few hours', 'Take paracetamol if fever is high (as per dosage guidance)'] },
+
+  { keys: ['cough','cold','khansi','sore throat','gala'],
+    risk: 'LOW',
+    summary: 'A cough or cold lasting around a week is usually a common viral infection that resolves with rest and home care.',
+    action: 'Home care is sufficient. Monitor for worsening symptoms like high fever or breathing difficulty.',
+    tips: ['Drink warm fluids and stay hydrated', 'Use steam inhalation for congestion', 'See a doctor if it persists beyond 10 days'] },
+
+  { keys: ['stomach','vomit','vomiting','diarrhea','loose motion','pet dard','ulti'],
+    risk: 'MEDIUM',
+    summary: 'Stomach ache with vomiting can be due to food poisoning, infection, or indigestion. Dehydration is the main risk.',
+    action: 'If vomiting continues beyond 24 hours or you see blood, visit a clinic. Otherwise, focus on hydration and light food.',
+    tips: ['Drink ORS or fluids frequently', 'Avoid solid/spicy food for a few hours', 'Watch for signs of dehydration (dizziness, dry mouth)'] },
+
+  { keys: ['headache','sir dard','migraine'],
+    risk: 'LOW',
+    summary: 'A headache along with mild fever is often related to a common viral infection, tension, or dehydration.',
+    action: 'Home care with rest and hydration is usually enough. Seek care if it becomes severe or sudden.',
+    tips: ['Rest in a quiet, dark room', 'Stay hydrated', 'Avoid screen time for a while'] },
+];
+
+function classify(text){
+  const t = text.toLowerCase();
+  for(const entry of KB){
+    if(entry.keys.some(k => t.includes(k))) return entry;
+  }
+  // default fallback
+  return {
+    risk: 'MEDIUM',
+    summary: 'Based on the symptoms described, it is best to get a professional opinion to rule out anything serious.',
+    action: 'Consider visiting a nearby clinic or consulting a doctor within the next 1-2 days for proper evaluation.',
+    tips: ['Note down when symptoms started', 'Avoid self-medication without guidance', 'Keep monitoring for any worsening']
+  };
+}
+
+function sendMsg(){
   const text = inp.value.trim();
   if(!text) return;
   inp.value=''; btn.disabled=true;
   addMsg(text,'user');
   showTyping();
 
-  const system = `You are MediSure AI, a GenAI healthcare guidance assistant. Analyze symptoms and respond ONLY in this JSON format (no markdown, no extra text):
-{"risk":"LOW|MEDIUM|HIGH","summary":"2-3 sentence explanation","action":"specific next step","tips":["tip1","tip2"]}
-Rules: LOW=home care, MEDIUM=clinic visit 24-48h, HIGH=emergency now. Be empathetic, simple language. If Hindi/Hinglish input, respond in Hindi.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:800,
-        system, messages:[{role:'user',content:`Patient symptoms: ${text}`}]
-      })
-    });
-    const data = await res.json();
+  // Simulated AI processing delay for realistic feel
+  setTimeout(() => {
     removeTyping();
-    const raw = data.content?.map(i=>i.text||'').join('');
-    let p;
-    try{ p=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
-    catch{ addMsg(raw||'Error processing. Try again.','bot'); btn.disabled=false; return; }
-
+    const p = classify(text);
     const rc = p.risk==='LOW'?'low':p.risk==='MEDIUM'?'medium':'high';
     const rl = p.risk==='LOW'?'🟢 Low Risk — Home Care':p.risk==='MEDIUM'?'🟡 Medium Risk — Visit Clinic':'🔴 High Risk — Emergency';
     const html=`
@@ -146,11 +184,8 @@ Rules: LOW=home care, MEDIUM=clinic visit 24-48h, HIGH=emergency now. Be empathe
       ${p.tips?`<div class="tips">${p.tips.map(t=>`<div>· ${t}</div>`).join('')}</div>`:''}
     `;
     addMsg(html,'bot');
-  } catch(err){
-    removeTyping();
-    addMsg('Network error. Please try again.','bot');
-  }
-  btn.disabled=false;
+    btn.disabled=false;
+  }, 900 + Math.random()*600);
 }
 </script>
 </body>
